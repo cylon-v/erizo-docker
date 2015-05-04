@@ -66,4 +66,5 @@ ENV LD\_LIBRARY\_PATH=/app/licode/erizo/build/erizo
 RUN ./build.sh
 
 ADD app/* /app/
+WORKDIR /app
 ENTRYPOINT ["/usr/bin/node", "/app/app.js"]
