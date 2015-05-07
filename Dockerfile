@@ -9,9 +9,11 @@ RUN apt-get -y install python-software-properties software-properties-common git
 
 RUN npm install -g node-gyp
 
-RUN mkdir /app
-WORKDIR /app
-RUN git clone https://github.com/ging/licode.git
+RUN mkdir -p /app/licode
+WORKDIR /app/licode
+RUN curl -L https://github.com/ging/licode/archive/v1.1.0.tar.gz > licode.tar.gz
+RUN tar -zxvf licode.tar.gz --strip-components=1
+RUN rm licode.tar.gz
 
 RUN mkdir -p /app/licode/build/libdeps
 RUN mkdir -p /app/licode/build/libdeps/build
@@ -29,7 +31,6 @@ RUN curl -O http://nice.freedesktop.org/releases/libnice-0.1.4.tar.gz
 RUN tar -zxvf libnice-0.1.4.tar.gz
 WORKDIR /app/licode/build/libdeps/libnice-0.1.4
 RUN patch -R ./agent/conncheck.c < /app/licode/scripts/libnice-014.patch0
-RUN patch -p1 < /app/licode/scripts/libnice-014.patch1
 RUN ./configure --prefix=/app/licode/build/libdeps/build
 RUN make -s V=0
 RUN make install
@@ -49,14 +50,15 @@ RUN make -s V=0
 RUN make install
 
 WORKDIR /app/licode/build/libdeps
-RUN curl -O https://www.libav.org/releases/libav-11.1.tar.gz
-RUN tar -zxvf libav-11.1.tar.gz
-WORKDIR /app/licode/build/libdeps/libav-11.1
+RUN curl -O https://www.libav.org/releases/libav-9.13.tar.gz
+RUN tar -zxvf libav-9.13.tar.gz
+WORKDIR /app/licode/build/libdeps/libav-9.13
 RUN PKG_CONFIG_PATH=/app/licode/build/libdeps/build/lib/pkgconfig ./configure --prefix=/app/licode/build/libdeps/build --enable-shared --enable-gpl --enable-libvpx --enable-libx264 --enable-libopus
 RUN make -s V=0
 RUN make install
 
 WORKDIR /app/licode/erizo
+ADD patch/CMakeLists.txt /app/licode/erizo/src/CMakeLists.txt
 RUN ./generateProject.sh
 RUN ./buildProject.sh
 
@@ -67,4 +69,4 @@ RUN ./build.sh
 
 ADD app/* /app/
 WORKDIR /app
-ENTRYPOINT ["/usr/bin/node", "/app/app.js"]
+ENTRYPOINT /bin/bash
